@@ -1,8 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #794420;
+  --secondary: #d8996e;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #794420;
+  --secondary: #d8996e;
+}
+
+h1 {
+  font-size: 12vh;
+  font-family: "Inter", sans-serif;
+  line-height: 100%;
+  font-weight: 800;
+}
+
+@layer utilities {
+  .text-color-gradient {
+    position: relative;
+    background: linear-gradient(
+      120deg,
+      var(--color-primary) 10%,
+      var(--color-secondary) 80%
+    );
+    background-clip: text;
+    color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: brightness(1.15) drop-shadow(2px 4px rgba(0, 0, 0, 0.5));
+  }
+
+  .text-shadow {
+    text-shadow: 2px 4px 4px rgba(0, 0, 0, 0.5);
+  }
 }
 
 @theme inline {
@@ -10,14 +47,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 body {
   background: var(--background);
