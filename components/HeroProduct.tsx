@@ -10,10 +10,15 @@ const HeroProduct = ({ title, title2, imageSrc }: { title: string, title2: strin
             Jetzt Entdecken
           </div>
         </div>
+        <div className="absolute flex flex-col gap-3 bottom-[3vh] left-[50%] -translate-x-1/2 items-center justify-center">
+          <p className="text-white text-sm tracking-[.4rem]">Mehr entdecken</p>
+          <img className="w-[4vh]" src="/svg/arrow_down.svg" alt="Mehr entdecken" />
+        </div>
         <img className="absolute -z-40 max-h-full w-full" src={imageSrc} />
       </div>
     </div>
   )
+
 }
 
 export default HeroProduct;
