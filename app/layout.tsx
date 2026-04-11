@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/Navbar";
+import ReactLenis from "lenis/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,18 +31,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="bg-background min-h-full flex flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
-          themes={["light", "dark"]}
-          storageKey="theme"
-        >
-          <Navbar />
-          <main>{children}</main>
-        </ThemeProvider>
-      </body>
+      <ReactLenis root>
+        <body className="bg-background min-h-full flex flex-col">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            forcedTheme="light"
+            themes={["light", "dark"]}
+            storageKey="theme"
+          >
+            <Navbar />
+            <main>{children}</main>
+          </ThemeProvider>
+        </body>
+      </ReactLenis>
     </html>
   );
 }
