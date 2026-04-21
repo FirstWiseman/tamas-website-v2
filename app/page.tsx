@@ -32,6 +32,7 @@ export default function Home() {
           title="Wix Tisch"
           title2="Der Oberklasse"
           imageSrc="/images/products/Product11.png"
+          ctaHref="/furniture/table?product=wix-tisch"
         />
       </section>
  
@@ -64,23 +65,23 @@ export default function Home() {
                     alt={`${category.label} Kategorie Icon`}
                     width={84}
                     height={84}
-                    className="h-20 w-20"
+                    className="h-20 w-20 transition duration-300 dark:brightness-0 dark:invert"
                   />
                   <div className="flex flex-col items-center gap-3">
-                    <h3 className="text-3xl font-bold tracking-[-0.03em] text-black">
+                    <h3 className="text-3xl font-bold tracking-[-0.03em] text-black dark:text-white">
                       {category.label}
                     </h3>
-                    <p className="max-w-xs text-sm leading-6 text-black/64">
+                    <p className="max-w-xs text-sm leading-6 text-black/64 dark:text-white/62">
                       {category.description}
                     </p>
-                    <span className="text-xs font-semibold uppercase tracking-[0.22rem] text-black/48 transition-colors group-hover:text-black">
+                    <span className="text-xs font-semibold uppercase tracking-[0.22rem] text-black/48 transition-colors group-hover:text-black dark:text-white/46 dark:group-hover:text-white">
                       Zum Katalog
                     </span>
                   </div>
                 </Link>
 
                 {index !== categories.length - 1 && (
-                  <div className="hidden h-auto w-px self-stretch bg-black/10 md:block" />
+                  <div className="hidden h-auto w-px self-stretch bg-black/10 dark:bg-white/10 md:block" />
                 )}
               </div>
             ))}

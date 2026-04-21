@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { CartProvider } from "@/components/CartProvider";
 import ReactLenis from "lenis/react";
 
 const geistSans = Geist({
@@ -36,12 +38,16 @@ export default function RootLayout({
           <ThemeProvider
             attribute="class"
             defaultTheme="light"
-            forcedTheme="light"
+            enableSystem={false}
             themes={["light", "dark"]}
             storageKey="theme"
+            disableTransitionOnChange
           >
-            <Navbar />
-            <main>{children}</main>
+            <CartProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </CartProvider>
           </ThemeProvider>
         </body>
       </ReactLenis>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   FilterKey,
   Product,
 } from "@/lib/furnitureCatalog";
+import { useCart } from "@/components/CartProvider";
 
 type ActiveFilters = Record<FilterKey, string | null>;
 
@@ -38,6 +40,33 @@ function getDiscountedPrice(price: number, discount: number | null) {
   return Math.round(price * (1 - discount / 100));
 }
 
+const contactCategoryByCategory: Record<CategoryKey, string> = {
+  table: "Tisch",
+  bench: "Bank",
+  bed: "Bett",
+};
+
+function buildProductRequestHref(product: Product, category: CategoryKey) {
+  const params = new URLSearchParams({
+    category: contactCategoryByCategory[category],
+    product: product.slug,
+    message: [
+      `Ich interessiere mich fuer das Produkt "${product.name}".`,
+      "",
+      `Produkt: ${product.name}`,
+      `Preis: ${formatPrice(getDiscountedPrice(product.price, product.discount))}`,
+      `Kante: ${product.kante}`,
+      `Gestell: ${product.gestell}`,
+      `Lack: ${product.lack}`,
+      `Buerstung: ${product.buerstung}`,
+      "",
+      "Meine Anfrage:",
+    ].join("\n"),
+  });
+
+  return `/contact?${params.toString()}`;
+}
+
 function FilterChip({
   label,
   active,
@@ -53,8 +82,8 @@ function FilterChip({
       onClick={onClick}
       className={`rounded-full border px-2.5 py-1 text-[0.68rem] font-medium leading-none transition sm:px-3 sm:py-1.5 sm:text-[0.72rem] ${
         active
-          ? "border-black bg-black text-white shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
-          : "border-black/8 bg-white/72 text-black/62 hover:border-black/16 hover:bg-white hover:text-black"
+          ? "border-black bg-black text-white shadow-[0_10px_24px_rgba(0,0,0,0.12)] dark:border-white dark:bg-white dark:text-[#16110d]"
+          : "border-black/8 bg-white/72 text-black/62 hover:border-black/16 hover:bg-white hover:text-black dark:border-white/10 dark:bg-white/[0.055] dark:text-white/62 dark:hover:border-white/18 dark:hover:bg-white/[0.08] dark:hover:text-white"
       }`}
     >
       {label}
@@ -128,13 +157,16 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
 function ProductModal({
   product,
+  category,
   onClose,
 }: {
   product: Product;
+  category: CategoryKey;
   onClose: () => void;
 }) {
   const hasDiscount = product.discount !== null && product.discount > 0;
   const displayPrice = getDiscountedPrice(product.price, product.discount);
+  const { addItem } = useCart();
 
   useEffect(() => {
     const scrollY = window.scrollY;
@@ -188,7 +220,7 @@ function ProductModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 16, scale: 0.98 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="relative max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/12 bg-[rgba(20,14,10,0.74)] shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:max-h-[90vh] sm:rounded-4xl"
+        className="relative max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/12 bg-[rgba(20,14,10,0.74)] shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-3xl sm:max-h-[90vh] sm:rounded-4xl"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -277,14 +309,21 @@ function ProductModal({
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
+                  onClick={() => addItem(product, displayPrice)}
+                  className="w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/88 sm:w-auto"
+                >
+                  In den Warenkorb
+                </button>
+                <Link
+                  href={buildProductRequestHref(product, category)}
                   className="w-full rounded-full border border-white/14 bg-white/8 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/14 sm:w-auto"
                 >
                   Anfragen
-                </button>
+                </Link>
                 {product.configurable && (
                   <button
                     type="button"
-                    className="w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/88 sm:w-auto"
+                    className="w-full rounded-full border border-white/18 bg-transparent px-5 py-3 text-sm font-medium text-white transition hover:bg-white/8 sm:w-auto"
                   >
                     Konfigurieren
                   </button>
@@ -303,8 +342,10 @@ export default function FurnitureCatalogView({
 }: {
   category: CategoryKey;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(emptyFilters());
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   const activeMeta = categories[category];
   const activeProducts = catalog[category];
@@ -326,8 +367,14 @@ export default function FurnitureCatalogView({
     );
   }, [activeFilters, activeProducts]);
 
+  const selectedProductSlug = (() => {
+    const productParam = searchParams.get("product");
+    if (!productParam) return null;
+    return productParam;
+  })();
+
   const selectedProduct =
-    filteredProducts.find((product) => product.id === selectedProductId) ?? null;
+    filteredProducts.find((product) => product.slug === selectedProductSlug) ?? null;
 
   const hasActiveFilters = Object.values(activeFilters).some(Boolean);
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
@@ -343,6 +390,27 @@ export default function FurnitureCatalogView({
     setActiveFilters(emptyFilters());
   };
 
+  const updateProductQuery = (productSlug: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (productSlug === null) {
+      params.delete("product");
+    } else {
+      params.set("product", productSlug);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const openProductModal = (productSlug: string) => {
+    updateProductQuery(productSlug);
+  };
+
+  const closeProductModal = () => {
+    updateProductQuery(null);
+  };
+
   return (
     <div className="min-h-screen w-full px-4 pb-14 pt-24 sm:px-5 sm:pb-16 sm:pt-28 md:px-10 lg:px-16">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
@@ -350,17 +418,17 @@ export default function FurnitureCatalogView({
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="grid gap-6 overflow-hidden rounded-[2rem] border border-black/8 bg-white/58 p-5 shadow-[0_18px_44px_rgba(0,0,0,0.08)] backdrop-blur-sm sm:p-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:rounded-[2.25rem] lg:p-8"
+          className="grid gap-6 overflow-hidden rounded-[2rem] border border-black/8 bg-white/58 p-5 shadow-[0_18px_44px_rgba(0,0,0,0.08)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.055] sm:p-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:rounded-[2.25rem] lg:p-8"
         >
           <div className="flex flex-col justify-between gap-6 lg:gap-8">
             <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.34rem] text-black/42">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.34rem] text-black/42 dark:text-white/40">
                 {activeMeta.eyebrow}
               </p>
               <h1 className="text-color-gradient text-[clamp(2.6rem,14vw,5.7rem)] font-black leading-[0.9] tracking-[-0.05em]">
                 {activeMeta.label}
               </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-black/68 sm:mt-5 sm:text-base sm:leading-7">
+              <p className="mt-4 max-w-xl text-sm leading-6 text-black/68 dark:text-white/64 sm:mt-5 sm:text-base sm:leading-7">
                 {activeMeta.description}
               </p>
             </div>
@@ -376,8 +444,8 @@ export default function FurnitureCatalogView({
                       href={`/furniture/${key}`}
                       className={`rounded-full px-4 py-2 text-[0.78rem] font-medium transition sm:px-5 sm:py-2.5 sm:text-sm ${
                         selected
-                          ? "bg-black text-white"
-                          : "border border-black/10 bg-white/65 text-black/70 hover:bg-white"
+                          ? "bg-black text-white dark:bg-white dark:text-[#16110d]"
+                          : "border border-black/10 bg-white/65 text-black/70 hover:bg-white dark:border-white/10 dark:bg-white/[0.055] dark:text-white/70 dark:hover:bg-white/[0.08]"
                       }`}
                     >
                       {item.label}
@@ -411,28 +479,28 @@ export default function FurnitureCatalogView({
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[1.45rem] border border-black/8 bg-white/52 p-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.05)] backdrop-blur-sm sm:rounded-[1.8rem] sm:p-4 md:p-5"
+          className="rounded-[1.45rem] border border-black/8 bg-white/52 p-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.05)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.045] sm:rounded-[1.8rem] sm:p-4 md:p-5"
         >
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.26rem] text-black/42">
+                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.26rem] text-black/42 dark:text-white/40">
                   Filter
                 </span>
-                <span className="rounded-full border border-black/8 bg-white/72 px-3 py-1 text-[0.68rem] font-medium text-black/52">
+                <span className="rounded-full border border-black/8 bg-white/72 px-3 py-1 text-[0.68rem] font-medium text-black/52 dark:border-white/10 dark:bg-white/[0.055] dark:text-white/52">
                   {hasActiveFilters ? `${activeFilterCount} aktiv` : "Alle Produkte"}
                 </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-black/8 bg-white/72 px-3 py-1 text-[0.68rem] font-medium text-black/52">
+                <span className="rounded-full border border-black/8 bg-white/72 px-3 py-1 text-[0.68rem] font-medium text-black/52 dark:border-white/10 dark:bg-white/[0.055] dark:text-white/52">
                   {filteredProducts.length} {filteredProducts.length === 1 ? "Produkt" : "Produkte"}
                 </span>
                 {hasActiveFilters && (
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="rounded-full border border-black/10 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14rem] text-black/52 transition hover:border-black/16 hover:bg-white"
+                    className="rounded-full border border-black/10 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14rem] text-black/52 transition hover:border-black/16 hover:bg-white dark:border-white/10 dark:text-white/52 dark:hover:border-white/18 dark:hover:bg-white/[0.08]"
                   >
                     Zurücksetzen
                   </button>
@@ -444,15 +512,15 @@ export default function FurnitureCatalogView({
               {filterOptions.map((group) => (
                 <div
                   key={group.key}
-                  className="rounded-[1rem] border border-black/8 bg-white/68 px-2.5 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.04)] sm:rounded-[1.25rem] sm:px-3 sm:py-3"
+                  className="rounded-[1rem] border border-black/8 bg-white/68 px-2.5 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-white/[0.055] sm:rounded-[1.25rem] sm:px-3 sm:py-3"
                 >
                   <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
-                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.16rem] text-black/42">
+                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.16rem] text-black/42 dark:text-white/40">
                       {group.label}
                     </span>
                     <span
                       className={`h-2 w-2 rounded-full transition ${
-                        activeFilters[group.key] ? "bg-[var(--primary)]" : "bg-black/10"
+                        activeFilters[group.key] ? "bg-secondary" : "bg-black/10 dark:bg-white/10"
                       }`}
                     />
                   </div>
@@ -492,18 +560,18 @@ export default function FurnitureCatalogView({
                 <button
                   key={product.id}
                   type="button"
-                  onClick={() => setSelectedProductId(product.id)}
+                  onClick={() => openProductModal(product.slug)}
                   className="cursor-pointer text-left"
                 >
                   <ProductCard product={product} index={index} />
                 </button>
               ))
             ) : (
-              <div className="col-span-full rounded-[1.8rem] border border-dashed border-black/10 bg-white/42 px-6 py-20 text-center backdrop-blur-sm">
-                <p className="text-xl font-semibold text-black/72">
+              <div className="col-span-full rounded-[1.8rem] border border-dashed border-black/10 bg-white/42 px-6 py-20 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.035]">
+                <p className="text-xl font-semibold text-black/72 dark:text-white/74">
                   Keine Produkte gefunden
                 </p>
-                <p className="mt-3 text-sm leading-6 text-black/52">
+                <p className="mt-3 text-sm leading-6 text-black/52 dark:text-white/54">
                   Versuche andere Filteroptionen oder setze die aktuelle Auswahl
                   zuruck.
                 </p>
@@ -516,7 +584,8 @@ export default function FurnitureCatalogView({
           {selectedProduct && (
             <ProductModal
               product={selectedProduct}
-              onClose={() => setSelectedProductId(null)}
+              category={category}
+              onClose={closeProductModal}
             />
           )}
         </AnimatePresence>

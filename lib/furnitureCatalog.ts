@@ -2,6 +2,7 @@ export type CategoryKey = "table" | "bench" | "bed";
 
 export interface Product {
   id: number;
+  slug: string;
   name: string;
   summary: string;
   price: number;
@@ -47,6 +48,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
   table: [
     {
       id: 1,
+      slug: "wix-tisch",
       name: "Wix Tisch",
       summary: "Baumkante, dunkles Gestell und ruhige Tafelform.",
       price: 4890,
@@ -60,6 +62,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 2,
+      slug: "tafel-nord",
       name: "Tafel Nord",
       summary: "Lange Platte fur grosszugige Essbereiche.",
       price: 5290,
@@ -73,6 +76,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 3,
+      slug: "atelier-tisch",
       name: "Atelier Tisch",
       summary: "Klar gezeichneter Tisch mit leichterem Ausdruck.",
       price: 4580,
@@ -86,6 +90,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 4,
+      slug: "tisch-form",
       name: "Tisch Form",
       summary: "Essplatz mit leichter Platte und warmer Oberflache.",
       price: 4720,
@@ -99,6 +104,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 5,
+      slug: "esstisch-atelier",
       name: "Esstisch Atelier",
       summary: "Kompakter Tisch fur ruhig komponierte Wohnsituationen.",
       price: 4380,
@@ -112,6 +118,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 6,
+      slug: "tafel-werk",
       name: "Tafel Werk",
       summary: "Massive Platte mit handwerklicher Anmutung und klarer Linie.",
       price: 5560,
@@ -127,6 +134,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
   bench: [
     {
       id: 7,
+      slug: "bank-linie",
       name: "Bank Linie",
       summary: "Lange Sitzbank mit klarer Basis und ruhigem Aufbau.",
       price: 2190,
@@ -140,6 +148,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 8,
+      slug: "sitzbank-atelier",
       name: "Sitzbank Atelier",
       summary: "Warmer Holzton und leichte handwerkliche Note.",
       price: 1960,
@@ -153,6 +162,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 9,
+      slug: "polsterbank",
       name: "Polsterbank",
       summary: "Fur Essplatz und Nische, weich und robust kombiniert.",
       price: 2480,
@@ -166,6 +176,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 10,
+      slug: "bank-nord",
       name: "Bank Nord",
       summary: "Schlanke Sitzbank fur Flur, Essplatz und ruhige Zwischenraume.",
       price: 1820,
@@ -179,6 +190,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 11,
+      slug: "eckbank-studio",
       name: "Eckbank Studio",
       summary: "Grosszugige Banklosung mit warmer Holzprasenz.",
       price: 2940,
@@ -192,6 +204,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 12,
+      slug: "bank-kompakt",
       name: "Bank Kompakt",
       summary: "Kleineres Sitzobjekt mit klarer Geometrie und robuster Basis.",
       price: 1690,
@@ -207,6 +220,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
   bed: [
     {
       id: 13,
+      slug: "bett-eiche",
       name: "Bett Eiche",
       summary: "Reduziertes Holzrahmenbett mit warmer Maserung.",
       price: 5390,
@@ -220,6 +234,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 14,
+      slug: "rahmenbett-nord",
       name: "Rahmenbett Nord",
       summary: "Klarer Aufbau mit ruhiger Kopfteilzeichnung.",
       price: 5980,
@@ -233,6 +248,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 15,
+      slug: "bett-atelier",
       name: "Bett Atelier",
       summary: "Modernes Holzbett mit feiner Kante und ruhigem Ausdruck.",
       price: 5640,
@@ -246,6 +262,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 16,
+      slug: "bett-form",
       name: "Bett Form",
       summary: "Massiver Rahmen mit dunklerem Ton und klarer Silhouette.",
       price: 6210,
@@ -259,6 +276,7 @@ export const catalog: Record<CategoryKey, Product[]> = {
     },
     {
       id: 17,
+      slug: "schlafsystem-werk",
       name: "Schlafsystem Werk",
       summary: "Reduzierte Schlaflosung mit handwerklicher Materialnote.",
       price: 5870,

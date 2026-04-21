@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCart } from "@/components/CartProvider";
+import { useTheme } from "next-themes";
 
 const navLinks = [
   { href: "/", label: "Start" },
   { href: "/furniture", label: "Möbel" },
-  { href: "/configurator", label: "Kontakt" },
+  { href: "/contact", label: "Kontakt" },
 ];
 
 function isActivePath(pathname: string, href: string) {
@@ -16,10 +18,50 @@ function isActivePath(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
+function CartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-[1.05rem] w-[1.05rem]">
+      <path d="M3 5h2l1.2 7.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L18.5 7H7.2" />
+      <circle cx="9.2" cy="18.2" r="1.5" />
+      <circle cx="16.8" cy="18.2" r="1.5" />
+    </svg>
+  );
+}
+
+function ThemeIcon({ dark }: { dark: boolean }) {
+  if (dark) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="h-[1.05rem] w-[1.05rem]"
+      >
+        <path d="M12 3.8v1.9M12 18.3v1.9M5.6 5.6 7 7M17 17l1.4 1.4M3.8 12h1.9M18.3 12h1.9M5.6 18.4 7 17M17 7l1.4-1.4" />
+        <circle cx="12" cy="12" r="4.1" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-[1.05rem] w-[1.05rem]"
+    >
+      <path d="M20.2 14.1A7.9 7.9 0 1 1 9.9 3.8a6.5 6.5 0 0 0 10.3 10.3Z" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
-  const isConfiguratorPage = pathname === "/configurator";
+  const isContactPage = pathname === "/contact";
+  const showCart = pathname.startsWith("/furniture/");
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false,
   );
@@ -28,6 +70,14 @@ export default function Navbar() {
   const [floating, setFloating] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const { itemCount, toggleCart } = useCart();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const isDarkMode = resolvedTheme === "dark";
 
   const resetNavbarState = () => {
     setFloating(false);
@@ -64,7 +114,7 @@ export default function Navbar() {
         return;
       }
 
-      if (isConfiguratorPage || isOpen) {
+      if (isContactPage || isOpen) {
         setFloating(true);
         setHidden(false);
         return;
@@ -85,7 +135,7 @@ export default function Navbar() {
       return;
     }
 
-    if (isConfiguratorPage || isOpen) {
+    if (isContactPage || isOpen) {
       setHidden(false);
       return;
     }
@@ -173,28 +223,84 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+
+              {showCart && (
+                <button
+                  type="button"
+                  onClick={toggleCart}
+                  className="relative ml-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/8 text-white/80 transition hover:bg-white/12 hover:text-white"
+                  aria-label="Warenkorb öffnen"
+                >
+                  <CartIcon />
+                  {itemCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 py-0.5 text-[0.64rem] font-semibold text-white shadow-[0_6px_16px_rgba(0,0,0,0.18)]">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {isClient && (
+                <button
+                  type="button"
+                  onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/8 text-white/80 transition hover:bg-white/12 hover:text-white"
+                  aria-label={isDarkMode ? "Hellen Modus aktivieren" : "Dunklen Modus aktivieren"}
+                >
+                  <ThemeIcon dark={isDarkMode} />
+                </button>
+              )}
             </div>
 
-            <button
-              type="button"
-              aria-label={isOpen ? "Navigation schliessen" : "Navigation offnen"}
-              aria-expanded={isOpen}
-              onClick={() => setIsOpen((open) => !open)}
-              className="relative flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-white/12 bg-white/6 text-white md:hidden"
-            >
-              <motion.span
-                animate={isOpen ? { rotate: 45, y: 0 } : { rotate: 0, y: -4 }}
-                className="absolute h-[1.5px] w-4 rounded-full bg-current"
-              />
-              <motion.span
-                animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
-                className="absolute h-[1.5px] w-4 rounded-full bg-current"
-              />
-              <motion.span
-                animate={isOpen ? { rotate: -45, y: 0 } : { rotate: 0, y: 4 }}
-                className="absolute h-[1.5px] w-4 rounded-full bg-current"
-              />
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              {isClient && (
+                <button
+                  type="button"
+                  onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+                  className="flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-white/12 bg-white/6 text-white"
+                  aria-label={isDarkMode ? "Hellen Modus aktivieren" : "Dunklen Modus aktivieren"}
+                >
+                  <ThemeIcon dark={isDarkMode} />
+                </button>
+              )}
+
+              {showCart && (
+                <button
+                  type="button"
+                  onClick={toggleCart}
+                  className="relative flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-white/12 bg-white/6 text-white"
+                  aria-label="Warenkorb öffnen"
+                >
+                  <CartIcon />
+                  {itemCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 py-0.5 text-[0.64rem] font-semibold text-white shadow-[0_6px_16px_rgba(0,0,0,0.18)]">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              <button
+                type="button"
+                aria-label={isOpen ? "Navigation schliessen" : "Navigation offnen"}
+                aria-expanded={isOpen}
+                onClick={() => setIsOpen((open) => !open)}
+                className="relative flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-white/12 bg-white/6 text-white"
+              >
+                <motion.span
+                  animate={isOpen ? { rotate: 45, y: 0 } : { rotate: 0, y: -4 }}
+                  className="absolute h-[1.5px] w-4 rounded-full bg-current"
+                />
+                <motion.span
+                  animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
+                  className="absolute h-[1.5px] w-4 rounded-full bg-current"
+                />
+                <motion.span
+                  animate={isOpen ? { rotate: -45, y: 0 } : { rotate: 0, y: 4 }}
+                  className="absolute h-[1.5px] w-4 rounded-full bg-current"
+                />
+              </button>
+            </div>
           </div>
 
           <AnimatePresence>

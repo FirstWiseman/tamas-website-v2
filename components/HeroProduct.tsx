@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Lora } from "next/font/google";
+import Link from "next/link";
+import { DM_Serif_Display } from "next/font/google";
 import { motion } from "framer-motion";
 
 interface HeroProductProps {
   title: string;
   title2: string;
   imageSrc: string;
+  ctaHref?: string;
 }
 
 const fadeUp = {
@@ -24,10 +26,9 @@ const fadeUp = {
   }),
 };
 
-const heroSerif = Lora({
+const heroSerif = DM_Serif_Display({
   subsets: ["latin"],
-  weight: ["600", "700"],
-  style: ["italic"],
+  weight: ["400"],
 });
 
 const INTRO_DELAY = 0;
@@ -36,6 +37,7 @@ export default function HeroProduct({
   title,
   title2,
   imageSrc,
+  ctaHref = "/furniture",
 }: HeroProductProps) {
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -67,14 +69,14 @@ export default function HeroProduct({
         >
           <motion.div custom={INTRO_DELAY} variants={fadeUp}>
             <h1
-              className={`${heroSerif.className} text-color-gradient text-[clamp(4.25rem,10vw,7.4rem)] leading-[0.84] tracking-[0.03em] italic`}
+              className={`${heroSerif.className} text-color-gradient text-[clamp(4.25rem,10vw,7.45rem)]! leading-[0.84] tracking-[0.01em]`}
             >
               {title}
             </h1>
           </motion.div>
 
           <motion.div custom={INTRO_DELAY + 0.14} variants={fadeUp}>
-            <h1 className="text-shadow text-[clamp(2.6rem,6.8vw,5.1rem)] font-black leading-[0.92] tracking-[-0.04em] text-white">
+            <h1 className="text-shadow text-[clamp(2.6rem,6.8vw,5.1rem)]! font-black leading-[0.92] tracking-[-0.04em] text-white">
               {title2}
             </h1>
           </motion.div>
@@ -82,7 +84,7 @@ export default function HeroProduct({
           <motion.div
             custom={INTRO_DELAY + 0.28}
             variants={fadeUp}
-            className="mt-5 max-w-md pl-1"
+            className="mt-2 max-w-md pl-1"
           >
             <p className="text-sm leading-6 text-white/72 md:text-base">
               Massivholz, ruhige Proportionen und eine klare Formsprache fur
@@ -90,15 +92,26 @@ export default function HeroProduct({
             </p>
           </motion.div>
 
-          <motion.button
+          <motion.div
             custom={INTRO_DELAY + 0.4}
             variants={fadeUp}
-            whileHover={{ y: -2, scale: 1.02 }}
+            whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="mt-7 ml-1 rounded-md border border-white/18 bg-black/28 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-black/40"
+            className="mt-7 ml-1"
           >
-            Jetzt Entdecken
-          </motion.button>
+            <Link
+              href={ctaHref}
+              className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/8 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/12"
+            >
+              <span className="tracking-[0.01em]">Jetzt Entdecken</span>
+              <span
+                aria-hidden="true"
+                className="text-sm leading-none text-white/58 transition duration-300 group-hover:translate-x-0.5 group-hover:text-white"
+              >
+                →
+              </span>
+            </Link>
+          </motion.div>
         </motion.div>
 
         <motion.div

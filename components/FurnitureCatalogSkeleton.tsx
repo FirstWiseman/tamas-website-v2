@@ -1,12 +1,12 @@
 function SkeletonBlock({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-2xl bg-black/8 ${className}`} />;
+  return <div className={`animate-pulse rounded-2xl bg-black/8 dark:bg-white/8 ${className}`} />;
 }
 
 export default function FurnitureCatalogSkeleton() {
   return (
     <div className="min-h-screen w-full px-5 pb-16 pt-28 md:px-10 lg:px-16">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
-        <section className="grid gap-8 overflow-hidden rounded-[2.25rem] border border-black/8 bg-white/58 p-6 shadow-[0_18px_44px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
+        <section className="grid gap-8 overflow-hidden rounded-[2.25rem] border border-black/8 bg-white/58 p-6 shadow-[0_18px_44px_rgba(0,0,0,0.08)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.055] lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
           <div className="flex flex-col justify-between gap-8">
             <div>
               <SkeletonBlock className="mb-4 h-3 w-36 rounded-full" />
@@ -26,7 +26,7 @@ export default function FurnitureCatalogSkeleton() {
           <SkeletonBlock className="min-h-[20rem] w-full rounded-[1.8rem]" />
         </section>
 
-        <section className="rounded-[2rem] border border-black/8 bg-white/52 p-5 shadow-[0_12px_32px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <section className="rounded-[2rem] border border-black/8 bg-white/52 p-5 shadow-[0_12px_32px_rgba(0,0,0,0.05)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.045]">
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-center gap-3">
               <SkeletonBlock className="h-3 w-20 rounded-full" />

@@ -1,18 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
   --primary: #794420;
   --secondary: #d8996e;
+  --surface: rgba(255, 255, 255, 0.68);
+  --surface-strong: rgba(255, 255, 255, 0.84);
+  --surface-soft: rgba(255, 255, 255, 0.54);
+  --line: rgba(23, 23, 23, 0.08);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #120d0a;
+  --foreground: #f4ede6;
   --primary: #794420;
   --secondary: #d8996e;
+  --surface: rgba(31, 23, 18, 0.72);
+  --surface-strong: rgba(35, 26, 21, 0.86);
+  --surface-soft: rgba(28, 20, 16, 0.58);
+  --line: rgba(244, 237, 230, 0.1);
 }
 
 h1 {
@@ -84,13 +94,24 @@ body {
 body {
   background-color: var(--background);
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(216, 153, 110, 0.16), transparent 34%),
-    radial-gradient(circle at 80% 70%, rgba(121, 68, 32, 0.1), transparent 28%);
+    radial-gradient(circle at 8% 12%, rgba(88, 49, 30, 0.075), transparent 38%),
+    radial-gradient(circle at 92% 88%, rgba(55, 32, 21, 0.103), transparent 32%);
   background-repeat: no-repeat;
   background-size: 100% 100%;
   background-attachment: scroll;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    background-image 220ms ease;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 8% 12%, rgba(129, 76, 45, 0.034), transparent 44%),
+    radial-gradient(circle at 96% 98%, rgba(82, 46, 28, 0.055), transparent 38%),
+    linear-gradient(180deg, rgb(12, 11, 10) 0%, rgb(5, 4, 4) 100%);
 }
 
 @media (min-width: 768px) {

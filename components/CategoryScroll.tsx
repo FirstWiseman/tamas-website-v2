@@ -10,6 +10,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { useLenis } from "lenis/react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 interface SlideImage {
@@ -99,6 +100,11 @@ const SLIDE_COUNT = slides.length;
 const VIEWPORTS_PER_SLIDE = 1.75;
 const TOTAL_VH = SLIDE_COUNT * VIEWPORTS_PER_SLIDE + 1;
 const PANEL_HEIGHT = "100dvh";
+const SNAP_ALIGNMENT_OFFSET = 300;
+const SNAP_TARGET_OFFSET = 550;
+const SNAP_COMPOSED_PROGRESS = 0.74;
+const SNAP_DURATION_DOWN = 1.25;
+const SNAP_DURATION_UP = 1.0;
 
 type PanelMode = "start" | "fixed" | "end";
 
@@ -145,7 +151,7 @@ function AnimatedImageFrame({
         }
         className="h-full w-full"
       >
-        <div className="relative h-full w-full overflow-hidden rounded-[1.35rem] bg-neutral-100 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+        <div className="relative h-full w-full overflow-hidden rounded-[1.35rem] bg-neutral-100 shadow-[0_18px_50px_rgba(0,0,0,0.16)] dark:bg-[#1b1410]">
           <Image
             src={image.src}
             alt={image.alt}
@@ -173,12 +179,12 @@ function CategoryLinkButton({
     <motion.div style={style} className="mt-6">
       <Link
         href={href}
-        className="group inline-flex items-center gap-2 rounded-full border border-black/12 bg-white/72 px-4 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-black/68 backdrop-blur-sm transition duration-300 hover:border-black/22 hover:bg-white hover:text-black"
+        className="group inline-flex items-center gap-2 rounded-full border border-black/12 bg-white/72 px-4 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-black/68 backdrop-blur-sm transition duration-300 hover:border-black/22 hover:bg-white hover:text-black dark:border-white/12 dark:bg-white/[0.06] dark:text-white/72 dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white"
       >
         <span>{label}</span>
         <span
           aria-hidden="true"
-          className="text-sm leading-none text-black/34 transition duration-300 group-hover:translate-x-0.5 group-hover:text-black/72"
+          className="text-sm leading-none text-black/34 transition duration-300 group-hover:translate-x-0.5 group-hover:text-black/72 dark:text-white/34 dark:group-hover:text-white/72"
         >
           →
         </span>
@@ -189,9 +195,12 @@ function CategoryLinkButton({
 
 export default function CategoryScroll() {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const isSnappingRef = useRef(false);
+  const snapResetRef = useRef<number | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("start");
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const lenis = useLenis();
   const rawProgress = useMotionValue(0);
   const smooth = useSpring(rawProgress, { stiffness: 70, damping: 24 });
 
@@ -251,6 +260,100 @@ export default function CategoryScroll() {
       unsubscribe();
     };
   }, [smooth]);
+
+  useEffect(() => {
+    const getSnapTargets = (wrapper: HTMLDivElement) => {
+      const scrollable = Math.max(wrapper.offsetHeight - window.innerHeight, 0);
+      const slideSpan = scrollable / SLIDE_COUNT;
+      const sectionTop =
+        wrapper.getBoundingClientRect().top + window.scrollY - SNAP_ALIGNMENT_OFFSET;
+
+      return slides.map((_, index) => {
+        const progressWithinSection = Math.min(
+          SLIDE_COUNT,
+          index + SNAP_COMPOSED_PROGRESS,
+        );
+
+        return sectionTop + slideSpan * progressWithinSection + SNAP_TARGET_OFFSET;
+      });
+    };
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!lenis || isSnappingRef.current || panelMode !== "fixed") return;
+      if (Math.abs(event.deltaY) < 18) return;
+
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
+
+      const snapTargets = getSnapTargets(wrapper);
+      const currentScroll = window.scrollY;
+      const firstTarget = snapTargets[0];
+      const enterThreshold = 48;
+      const currentIndex = snapTargets.reduce((closestIndex, target, index) => {
+        const currentDistance = Math.abs(target - currentScroll);
+        const closestDistance = Math.abs(snapTargets[closestIndex] - currentScroll);
+
+        return currentDistance < closestDistance ? index : closestIndex;
+      }, 0);
+
+      if (
+        (event.deltaY < 0 && currentIndex === 0 && currentScroll <= snapTargets[0] + 28) ||
+        (
+          event.deltaY > 0 &&
+          currentIndex === SLIDE_COUNT - 1 &&
+          currentScroll >= snapTargets[SLIDE_COUNT - 1] - 28
+        )
+      ) {
+        return;
+      }
+
+      const isEnteringFirstSlide =
+        event.deltaY > 0 && currentScroll < firstTarget - enterThreshold;
+      const nextIndex = isEnteringFirstSlide
+        ? 0
+        : event.deltaY > 0
+          ? Math.min(currentIndex + 1, SLIDE_COUNT - 1)
+          : Math.max(currentIndex - 1, 0);
+      const targetScroll = snapTargets[nextIndex];
+      const snapDuration = event.deltaY > 0 ? SNAP_DURATION_DOWN : SNAP_DURATION_UP;
+
+      if (!isEnteringFirstSlide && nextIndex === currentIndex) return;
+      if (Math.abs(targetScroll - currentScroll) < 18) return;
+
+      event.preventDefault();
+      isSnappingRef.current = true;
+      if (snapResetRef.current) {
+        window.clearTimeout(snapResetRef.current);
+      }
+
+      lenis.scrollTo(targetScroll, {
+        duration: snapDuration,
+        lock: true,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        onComplete: () => {
+          isSnappingRef.current = false;
+          if (snapResetRef.current) {
+            window.clearTimeout(snapResetRef.current);
+            snapResetRef.current = null;
+          }
+        },
+      });
+
+      snapResetRef.current = window.setTimeout(() => {
+        isSnappingRef.current = false;
+        snapResetRef.current = null;
+      }, 1200);
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      if (snapResetRef.current) {
+        window.clearTimeout(snapResetRef.current);
+      }
+    };
+  }, [lenis, panelMode]);
 
   const panelStyle =
     panelMode === "fixed"
@@ -364,7 +467,7 @@ function SlideLayer({
             image={slide.center}
             priority={index === 0}
             style={{ opacity: centerOpacity, scale: centerScale }}
-            frameClassName="left-[7%] top-[10%] h-[62%] w-[78%] md:left-[10%] md:top-[12%] md:h-[64%] md:w-[74%] z-10"
+            frameClassName="left-[4%] top-[8%] aspect-[1.72/1] w-[86%] md:left-[6%] md:top-[18%] md:w-[84%] z-10"
           />
 
           <AnimatedImageFrame
@@ -375,7 +478,7 @@ function SlideLayer({
               rotate: topRightRotate,
               opacity: topRightOpacity,
             }}
-            frameClassName="right-[1%] top-[1%] h-[54%] w-[68%] md:h-[36%] md:w-[46%] z-20"
+            frameClassName="right-[-8%] top-[-3%] aspect-[1.72/1] w-[72%] md:w-[54%] z-20"
             floatY={[0, -10, 0]}
             floatRotate={[0, 1.4, 0]}
             floatDuration={3.8}
@@ -390,7 +493,7 @@ function SlideLayer({
               rotate: bottomLeftRotate,
               opacity: bottomLeftOpacity,
             }}
-            frameClassName="bottom-[4%] left-0 h-[51%] w-[56%] md:bottom-[6%] md:h-[33%] md:w-[34%] z-20"
+            frameClassName="bottom-[1%] left-[-8%] aspect-[1.72/1] w-[62%] md:bottom-[3%] md:w-[44%] z-20"
             floatY={[0, -8, 0]}
             floatRotate={[0, -1.3, 0]}
             floatDuration={4.4}
@@ -402,11 +505,11 @@ function SlideLayer({
           style={{ opacity: textOpacity, y: textY }}
           className={`${copyOrder} mx-auto flex w-full max-w-sm flex-col items-start justify-center text-left`}
         >
-          <p className="mb-3 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-black/45">
+          <p className="mb-3 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/42">
             Kollektion
           </p>
           <h2 className="text-color-gradient">{slide.title}</h2>
-          <p className="mt-4 max-w-[26rem] text-sm leading-6 text-black/65 md:text-[0.95rem]">
+          <p className="mt-4 max-w-[26rem] text-sm leading-6 text-black/65 dark:text-white/64 md:text-[0.95rem]">
             {slide.description}
           </p>
           <CategoryLinkButton
@@ -431,19 +534,20 @@ function Dot({
   const end = (index + 1) / SLIDE_COUNT;
   const dotProgress = useTransform(smooth, [start, end], [0, 1]);
   const width = useTransform(dotProgress, [0.08, 0.44], [8, 26]);
+  // const width = 8;
   const opacity = useTransform(dotProgress, [0, 0.08, 0.9, 1], [0.25, 1, 1, 0.25]);
 
   return (
     <motion.div
       style={{ width, opacity }}
-      className="h-2 rounded-full bg-primary"
+      className="h-2 rounded-full bg-secondary"
     />
   );
 }
 
 function DotsIndicator({ smooth }: { smooth: MotionValue<number> }) {
   return (
-    <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-2">
+    <div className="pointer-events-none absolute left-8 top-1/2 z-30 flex -translate-y-1/2 flex-col items-start gap-2 md:left-12 lg:left-58">
       {slides.map((slide, index) => (
         <Dot key={slide.id} smooth={smooth} index={index} />
       ))}
